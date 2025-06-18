@@ -1,4 +1,4 @@
-import { Project } from '../Models/Project';
+import type { Project } from '../Models/Project';
 
 const STORAGE_KEY = 'projects';
 
@@ -29,4 +29,14 @@ export class ProjectAPI {
     const projects = this.getAll().filter(project => project.id !== id);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
   }
+  static setActiveProject(id: string) {
+    localStorage.setItem(ACTIVE_KEY, id);
+  }
+
+  static getActiveProject(): string | null {
+    return localStorage.getItem(ACTIVE_KEY);
+  }
 }
+
+const ACTIVE_KEY = 'activeProject';
+
