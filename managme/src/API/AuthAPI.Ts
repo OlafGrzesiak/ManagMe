@@ -4,6 +4,7 @@ const MOCK_USER: User = {
   id: "u1",
   firstName: "Olaf",
   secondName: "Grzesiak",
+  role: "admin"
 };
 
 export class AuthAPI {
