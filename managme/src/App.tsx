@@ -1,30 +1,59 @@
 import { useEffect, useState } from "react";
 
-/* ===== Rozgrzewka z TypeScript ===== */
+
 type Project = {
   id: string;
   name: string;
   description: string;
 };
 
-const STORAGE_KEY = "managme_projects";
+type User = {
+  id: string;
+  firstName: string;
+  lastName: string;
+};
+
+
+const PROJECTS_KEY = "managme_projects";
+const ACTIVE_PROJECT_KEY = "managme_active_project";
 
 function App() {
-  /* ===== Stan aplikacji ===== */
+  const [currentUser] = useState<User>({
+    id: "u1",
+    firstName: "Jan",
+    lastName: "Kowalski"
+  });
+
+
+
   const [projects, setProjects] = useState<Project[]>([]);
+  const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
+
+
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [editedProjectId, setEditedProjectId] = useState<string | null>(null);
 
-  /* ===== READ ===== */
+ 
+
   useEffect(() => {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(PROJECTS_KEY);
     if (data) {
       setProjects(JSON.parse(data));
     }
   }, []);
 
-  /* ===== CREATE ===== */
+
+  useEffect(() => {
+    const savedProjectId = localStorage.getItem(ACTIVE_PROJECT_KEY);
+    if (savedProjectId) {
+      setActiveProjectId(savedProjectId);
+    }
+  }, []);
+
+
+
   const addProject = () => {
     const newProject: Project = {
       id: crypto.randomUUID(),
@@ -34,16 +63,13 @@ function App() {
 
     const updatedProjects = [...projects, newProject];
     setProjects(updatedProjects);
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(updatedProjects)
-    );
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
 
     setName("");
     setDescription("");
   };
 
-  /* ===== UPDATE ===== */
+
   const updateProject = () => {
     if (!editedProjectId) return;
 
@@ -54,31 +80,41 @@ function App() {
     );
 
     setProjects(updatedProjects);
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(updatedProjects)
-    );
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
 
     setEditedProjectId(null);
     setName("");
     setDescription("");
   };
 
-  /* ===== DELETE ===== */
+  
   const deleteProject = (id: string) => {
-    const updatedProjects = projects.filter(
-      p => p.id !== id
-    );
+    const updatedProjects = projects.filter(p => p.id !== id);
     setProjects(updatedProjects);
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(updatedProjects)
-    );
+    localStorage.setItem(PROJECTS_KEY, JSON.stringify(updatedProjects));
+
+    if (activeProjectId === id) {
+      setActiveProjectId(null);
+      localStorage.removeItem(ACTIVE_PROJECT_KEY);
+    }
+  };
+
+
+  const setActiveProject = (id: string) => {
+    setActiveProjectId(id);
+    localStorage.setItem(ACTIVE_PROJECT_KEY, id);
   };
 
   return (
     <div style={{ padding: 20 }}>
       <h1>ManagMe</h1>
+
+      <p>
+        Logged user:{" "}
+        <strong>
+          {currentUser.firstName} {currentUser.lastName}
+        </strong>
+      </p>
 
       <h2>{editedProjectId ? "Edit project" : "New project"}</h2>
 
@@ -109,12 +145,20 @@ function App() {
           key={project.id}
           style={{
             border: "1px solid #ccc",
+            padding: 10,
             marginTop: 10,
-            padding: 10
+            background:
+              activeProjectId === project.id
+                ? "#eef6ff"
+                : "white"
           }}
         >
           <strong>{project.name}</strong>
           <p>{project.description}</p>
+
+          {activeProjectId === project.id && (
+            <p><strong>⭐ Active project</strong></p>
+          )}
 
           <button
             onClick={() => {
@@ -128,9 +172,16 @@ function App() {
 
           <button
             onClick={() => deleteProject(project.id)}
-            style={{ marginLeft: 10 }}
+            style={{ marginLeft: 8 }}
           >
             Delete
+          </button>
+
+          <button
+            onClick={() => setActiveProject(project.id)}
+            style={{ marginLeft: 8 }}
+          >
+            Set active
           </button>
         </div>
       ))}
